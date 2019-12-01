@@ -10,11 +10,11 @@ public class Value<_Tx> {
         this.value=object;
     }
 
-    _Tx get(){
+    public _Tx get(){
         return value;
     }
 
-    void set(_Tx object){
+    public void set(_Tx object){
         this.value=object;
     }
 
