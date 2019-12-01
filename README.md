@@ -33,7 +33,7 @@ public class Main{
 
 1、首先在项目根级目录中的build.gradle中添加：
 
-```json
+```text
 allprojects {
 		repositories {
 			maven { url 'https://www.jitpack.io' }
@@ -43,7 +43,7 @@ allprojects {
 
 2、然后在要依赖这个框架的Module的build.gradle中添加：
 
-```json
+```text
 implementation 'com.github.YuQianhao:Async:1.0.1'
 ```
 
