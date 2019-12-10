@@ -1,6 +1,8 @@
 package com.yuqianhao.async.core;
 
+import android.os.ConditionVariable;
 import android.os.Looper;
+import android.util.Log;
 
 import com.yuqianhao.async.R;
 import com.yuqianhao.async.model.Value;
@@ -9,6 +11,9 @@ import com.yuqianhao.async.thread.ThreadPool;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class SignleAsync implements ISignleAsync{
 
@@ -16,13 +21,17 @@ public class SignleAsync implements ISignleAsync{
 
     private Queue<Node> nodeQueue;
 
-    private Object lock;
+    private Lock lock;
+
+    private ConditionVariable condition;
 
     private ThreadPool threadPool;
 
     private MainThreadPool mainThreadPool;
 
     private Value _value;
+
+    private boolean isDoneExec;
 
     public SignleAsync(){
         if(Looper.myLooper()==Looper.getMainLooper()){
@@ -31,10 +40,13 @@ public class SignleAsync implements ISignleAsync{
             asyncType=AsyncType.IO;
         }
         nodeQueue=new ConcurrentLinkedQueue<>();
-        lock=new Object();
+        lock=new ReentrantLock();
+        condition=new ConditionVariable(true);
         threadPool=ThreadPool.getInstance();
         mainThreadPool=MainThreadPool.getInstance();
+        isDoneExec=false;
     }
+
 
     @Override
     public ISignleAsync io() {
@@ -79,15 +91,28 @@ public class SignleAsync implements ISignleAsync{
         this._value=value;
     }
 
-    private void postRun(AsyncType asyncType,Runnable runnable) throws InterruptedException {
-        if(asyncType==AsyncType.IO){
-            threadPool.submit(runnable);
+    private void runExector(final Exector exector){
+        lock.lock();
+        if(exector.asyncType.getType()==AsyncType.IO.getType()){
+            try{
+                exector.runnable.run();
+            }catch (Exception e){e.printStackTrace();}
         }else{
-            mainThreadPool.submit(runnable);
+            mainThreadPool.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try{
+                        exector.runnable.run();
+                    }catch (Exception e){e.printStackTrace();}
+                    finally {
+                        condition.open();
+                    }
+                }
+            });
+            condition.close();
+            condition.block();
         }
-        synchronized (lock){
-            lock.wait();
-        }
+        lock.unlock();
     }
 
     @Override
@@ -97,44 +122,44 @@ public class SignleAsync implements ISignleAsync{
             public void run() {
                 try{
                     Node node;
-                    while((node=nodeQueue.remove())!=null){
+                    Exector exector=null;
+                    while((node=nodeQueue.poll())!=null){
                         if(node instanceof RunnableNode){
                             final RunnableNode runnableNode= (RunnableNode) node;
                             Runnable _exec=new Runnable() {
                                 @Override
                                 public void run() {
                                     runnableNode.runnable.run();
-                                    synchronized (lock){
-                                        lock.notifyAll();
-                                    }
                                 }
                             };
-                            postRun(runnableNode.asyncType,_exec);
+                            exector=new Exector();
+                            exector.asyncType=runnableNode.asyncType;
+                            exector.runnable=_exec;
                         }else if(node instanceof ValueHandleNode){
                             final ValueHandleNode valueHandleNode= (ValueHandleNode) node;
                             Runnable _exec=new Runnable() {
                                 @Override
                                 public void run() {
                                     setValue(valueHandleNode.asyncValue.onHandle());
-                                    synchronized (lock){
-                                        lock.notifyAll();
-                                    }
                                 }
                             };
-                            postRun(valueHandleNode.asyncType,_exec);
+                            exector=new Exector();
+                            exector.asyncType=valueHandleNode.asyncType;
+                            exector.runnable=_exec;
                         }else if(node instanceof ReceiveHandlerNode){
                             final ReceiveHandlerNode receiveHandlerNode= (ReceiveHandlerNode) node;
                             Runnable _exec=new Runnable() {
                                 @Override
                                 public void run() {
                                     receiveHandlerNode.asyncValueHandler.onReceive(_value);
-                                    synchronized (lock){
-                                        lock.notifyAll();
-                                    }
                                 }
                             };
-                            postRun(receiveHandlerNode.asyncType,_exec);
+                            exector=new Exector();
+                            exector.asyncType=receiveHandlerNode.asyncType;
+                            exector.runnable=_exec;
                         }
+                        if(exector==null){continue;}
+                        runExector(exector);
                     }
                 }catch (Exception e){
                     e.printStackTrace();
@@ -142,6 +167,16 @@ public class SignleAsync implements ISignleAsync{
             }
         });
     }
+
+    public synchronized boolean isDoneExec() {
+        return isDoneExec;
+    }
+
+    public synchronized void setDoneExec(boolean doneExec) {
+        if(doneExec){Log.e("YThread","signal");}
+        isDoneExec = doneExec;
+    }
+
 
     private static class Node{
         public AsyncType asyncType;
@@ -157,5 +192,10 @@ public class SignleAsync implements ISignleAsync{
 
     private static class ReceiveHandlerNode extends Node{
         public IAsyncValueHandler asyncValueHandler;
+    }
+
+    private static class Exector{
+        public AsyncType asyncType;
+        public Runnable runnable;
     }
 }

@@ -1,7 +1,5 @@
 package com.yuqianhao.async.core;
 
-import android.app.Application;
-
 import com.yuqianhao.async.thread.ThreadPool;
 
 public class Async {
@@ -11,7 +9,7 @@ public class Async {
     }
 
     public static final IAsync createMultithreadAsync(){
-        return new MultithreadAsync();
+        return MultithreadAsync.getInstance();
     }
 
     public static final ISignleAsync createSignleAsync(){
