@@ -1,7 +1,5 @@
 package com.yuqianhao.async.core;
 
-import androidx.annotation.Nullable;
-
 public class AsyncType {
 
     public static final AsyncType IO=new AsyncType(0);
@@ -23,7 +21,7 @@ public class AsyncType {
     }
 
     @Override
-    public boolean equals(@Nullable Object obj) {
+    public boolean equals(Object obj) {
         return obj!=null && ((AsyncType)obj).type==type;
     }
 }
