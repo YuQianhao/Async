@@ -44,7 +44,7 @@ allprojects {
 2、然后在要依赖这个框架的Module的build.gradle中添加：
 
 ```text
-implementation 'com.github.YuQianhao:Async:1.0.9'
+implementation 'com.github.YuQianhao:Async:1.1.0'
 ```
 
 ## 如何使用？
