@@ -1,6 +1,5 @@
 package com.yuqianhao.async.model;
 
-import androidx.annotation.NonNull;
 
 public class Value<_Tx> {
 
@@ -18,7 +17,6 @@ public class Value<_Tx> {
         this.value=object;
     }
 
-    @NonNull
     @Override
     public String toString() {
         return value.toString();
