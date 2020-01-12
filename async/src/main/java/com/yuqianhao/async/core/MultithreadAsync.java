@@ -7,10 +7,8 @@ import com.yuqianhao.async.thread.ThreadPool;
 
 public class MultithreadAsync implements IAsync{
 
-    private static final MultithreadAsync MULTITHREAD_ASYNC=new MultithreadAsync();
-
-    public static final MultithreadAsync getInstance(){
-        return MULTITHREAD_ASYNC;
+    public static MultithreadAsync getInstance(){
+        return new MultithreadAsync();
     }
 
     private AsyncType multithreadType;
