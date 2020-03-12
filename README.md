@@ -29,22 +29,8 @@ public class Main{
 
 ## 如何依赖？
 
-[![](https://www.jitpack.io/v/YuQianhao/Async.svg)](https://www.jitpack.io/#YuQianhao/Async)
-
-1、首先在项目根级目录中的build.gradle中添加：
-
 ```text
-allprojects {
-		repositories {
-			maven { url 'https://www.jitpack.io' }
-		}
-	}
-```
-
-2、然后在要依赖这个框架的Module的build.gradle中添加：
-
-```text
-implementation 'com.github.YuQianhao:Async:1.1.1'
+implementation 'com.yuqianhao:Async:1.1.1'
 ```
 
 ## 如何使用？
