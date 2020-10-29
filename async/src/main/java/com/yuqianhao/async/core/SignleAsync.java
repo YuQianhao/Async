@@ -98,15 +98,12 @@ public class SignleAsync implements ISignleAsync{
                 exector.runnable.run();
             }catch (Exception e){e.printStackTrace();}
         }else{
-            mainThreadPool.submit(new Runnable() {
-                @Override
-                public void run() {
-                    try{
-                        exector.runnable.run();
-                    }catch (Exception e){e.printStackTrace();}
-                    finally {
-                        condition.open();
-                    }
+            mainThreadPool.submit(() -> {
+                try{
+                    exector.runnable.run();
+                }catch (Exception e){e.printStackTrace();}
+                finally {
+                    condition.open();
                 }
             });
             condition.close();
@@ -117,53 +114,35 @@ public class SignleAsync implements ISignleAsync{
 
     @Override
     public void run() {
-        threadPool.submit(new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    Node node;
-                    Exector exector=null;
-                    while((node=nodeQueue.poll())!=null){
-                        if(node instanceof RunnableNode){
-                            final RunnableNode runnableNode= (RunnableNode) node;
-                            Runnable _exec=new Runnable() {
-                                @Override
-                                public void run() {
-                                    runnableNode.runnable.run();
-                                }
-                            };
-                            exector=new Exector();
-                            exector.asyncType=runnableNode.asyncType;
-                            exector.runnable=_exec;
-                        }else if(node instanceof ValueHandleNode){
-                            final ValueHandleNode valueHandleNode= (ValueHandleNode) node;
-                            Runnable _exec=new Runnable() {
-                                @Override
-                                public void run() {
-                                    setValue(valueHandleNode.asyncValue.onHandle());
-                                }
-                            };
-                            exector=new Exector();
-                            exector.asyncType=valueHandleNode.asyncType;
-                            exector.runnable=_exec;
-                        }else if(node instanceof ReceiveHandlerNode){
-                            final ReceiveHandlerNode receiveHandlerNode= (ReceiveHandlerNode) node;
-                            Runnable _exec=new Runnable() {
-                                @Override
-                                public void run() {
-                                    receiveHandlerNode.asyncValueHandler.onReceive(_value);
-                                }
-                            };
-                            exector=new Exector();
-                            exector.asyncType=receiveHandlerNode.asyncType;
-                            exector.runnable=_exec;
-                        }
-                        if(exector==null){continue;}
-                        runExector(exector);
+        threadPool.submit(() -> {
+            try{
+                Node node;
+                Exector exector=null;
+                while((node=nodeQueue.poll())!=null){
+                    if(node instanceof RunnableNode){
+                        final RunnableNode runnableNode= (RunnableNode) node;
+                        Runnable _exec= () -> runnableNode.runnable.run();
+                        exector=new Exector();
+                        exector.asyncType=runnableNode.asyncType;
+                        exector.runnable=_exec;
+                    }else if(node instanceof ValueHandleNode){
+                        final ValueHandleNode valueHandleNode= (ValueHandleNode) node;
+                        Runnable _exec= () -> setValue(valueHandleNode.asyncValue.onHandle());
+                        exector=new Exector();
+                        exector.asyncType=valueHandleNode.asyncType;
+                        exector.runnable=_exec;
+                    }else if(node instanceof ReceiveHandlerNode){
+                        final ReceiveHandlerNode receiveHandlerNode= (ReceiveHandlerNode) node;
+                        Runnable _exec= () -> receiveHandlerNode.asyncValueHandler.onReceive(_value);
+                        exector=new Exector();
+                        exector.asyncType=receiveHandlerNode.asyncType;
+                        exector.runnable=_exec;
                     }
-                }catch (Exception e){
-                    e.printStackTrace();
+                    if(exector==null){continue;}
+                    runExector(exector);
                 }
+            }catch (Exception e){
+                e.printStackTrace();
             }
         });
     }

@@ -30,7 +30,7 @@ public class Main{
 ## 如何依赖？
 
 ```text
-implementation 'com.yuqianhao:Async:1.1.1'
+implementation 'com.yuqianhao:Async:1.1.2'
 ```
 
 ## 如何使用？
