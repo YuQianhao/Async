@@ -1,4 +1,5 @@
 # Async
+# 【该项目已停止维护，谢谢大佬们支持，换眼镜加我微信一起交流。yqh61385652】
 
 ![](https://github.com/YuQianhao/Async/blob/master/background.png?raw=true)
 
